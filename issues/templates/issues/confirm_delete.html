@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}刪除議題 - {{ project.key }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5><i class="bi bi-exclamation-triangle"></i> 確認刪除</h5>
+            </div>
+            <div class="card-body">
+                <p>確定要刪除議題 <strong>{{ project.key }}-{{ issue.id }}: {{ issue.summary }}</strong> 嗎？</p>
+                <p class="text-danger">此操作不可回復！</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> 確認刪除
+                    </button>
+                    <a href="{% url 'issues:detail' project.pk issue.pk %}" class="btn btn-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

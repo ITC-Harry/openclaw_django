@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load issue_extras %}
+{% block title %}#{{ issue.id }} {{ issue.summary }} - {{ project.key }}{% endblock %}
+{% block content %}
+
+<div class="mb-3">
+    <a href="{% url 'projects:detail' project.pk %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> 返回看板
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">{{ project.key }}-{{ issue.id }}</span>
+                    <div>
+                        <a href="{% url 'issues:edit' project.pk issue.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i> 編輯
+                        </a>
+                        <a href="{% url 'issues:delete' project.pk issue.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </div>
+                </div>
+                <h4>{{ issue.summary }}</h4>
+                <hr>
+                <div class="row mb-3">
+                    <div class="col-md-3"><strong>類型</strong><br><span class="badge" style="background:{{ issue.issue_type.color }}">{{ issue.issue_type.name }}</span></div>
+                    <div class="col-md-3"><strong>優先級</strong><br><span class="badge" style="background:{{ issue.priority.color }}">{{ issue.priority.name }}</span></div>
+                    <div class="col-md-3"><strong>狀態</strong><br><span class="badge" style="background:{{ issue.status.color }}">{{ issue.status.name }}</span></div>
+                    <div class="col-md-3"><strong>負責人</strong><br>{{ issue.assignee.get_full_name|default:issue.assignee.username|default:'未指派' }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6"><strong>報告人</strong><br>{{ issue.reporter.get_full_name|default:issue.reporter.username }}</div>
+                    <div class="col-md-6"><strong>標籤</strong><br>
+                        {% for label in issue.labels|split %}
+                        <span class="badge bg-info">{{ label.strip }}</span>
+                        {% empty %}
+                        <span class="text-muted">無</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6"><small class="text-muted">建立於 {{ issue.created_at|date:"Y/m/d H:i" }}</small></div>
+                    <div class="col-md-6"><small class="text-muted">更新於 {{ issue.updated_at|date:"Y/m/d H:i" }}</small></div>
+                </div>
+                {% if issue.description %}
+                <hr>
+                <h6>描述</h6>
+                <div class="p-3 bg-light rounded">{{ issue.description|linebreaks }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Comments -->
+        <div class="card shadow">
+            <div class="card-header"><h5><i class="bi bi-chat-dots"></i> 評論 ({{ issue.comments.count }})</h5></div>
+            <div class="card-body">
+                {% for comment in issue.comments.all %}
+                <div class="d-flex mb-3">
+                    <div class="flex-grow-1">
+                        <strong>{{ comment.author.get_full_name|default:comment.author.username }}</strong>
+                        <small class="text-muted ms-2">{{ comment.created_at|date:"Y/m/d H:i" }}</small>
+                        <p class="mb-0 mt-1">{{ comment.text|linebreaks }}</p>
+                    </div>
+                </div>
+                {% if not forloop.last %}<hr>{% endif %}
+                {% empty %}
+                <p class="text-muted">尚無評論</p>
+                {% endfor %}
+                <hr>
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="mb-2">{{ field }}</div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary btn-sm">新增評論</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <div class="card shadow mb-3">
+            <div class="card-header"><h6><i class="bi bi-arrow-left-right"></i> 變更狀態</h6></div>
+            <div class="card-body">
+                <form method="post" action="{% url 'issues:update_status' project.pk issue.pk %}">
+                    {% csrf_token %}
+                    <select name="status_id" class="form-select mb-2"
+                            onchange="this.form.submit()">
+                        {% for s in issue.status.__class__.objects.all %}
+                        <option value="{{ s.pk }}" {% if s == issue.status %}selected{% endif %}>
+                            {{ s.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

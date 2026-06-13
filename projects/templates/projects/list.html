@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}我的專案 - PM System{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3><i class="bi bi-folder"></i> 我的專案</h3>
+    <a href="{% url 'projects:create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> 新建專案
+    </a>
+</div>
+
+{% if projects %}
+<div class="row">
+    {% for project in projects %}
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <h5 class="card-title">
+                        <span class="badge bg-secondary">{{ project.key }}</span>
+                        {{ project.name }}
+                    </h5>
+                    <span class="badge bg-info">{{ project.get_project_type_display }}</span>
+                </div>
+                <p class="card-text text-muted small">
+                    {{ project.description|truncatechars:120 }}
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="bi bi-person"></i> {{ project.lead.get_full_name|default:project.lead.username }}
+                    </small>
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i> {{ project.created_at|date:"Y/m/d" }}
+                    </small>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{% url 'projects:detail' project.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye"></i> 檢視
+                </a>
+                <span class="badge bg-secondary float-end">
+                    <i class="bi bi-card-list"></i> {{ project.issues.count }}
+                </span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-folder-plus" style="font-size: 4rem; color: #ccc;"></i>
+    <h4 class="mt-3 text-muted">還沒有任何專案</h4>
+    <a href="{% url 'projects:create' %}" class="btn btn-primary mt-2">建立第一個專案</a>
+</div>
+{% endif %}
+{% endblock %}

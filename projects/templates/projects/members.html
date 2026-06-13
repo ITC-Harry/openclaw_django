@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}專案成員 - {{ project.key }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-people"></i> {{ project.key }} - 成員管理</h4>
+    <a href="{% url 'projects:detail' project.pk %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> 返回專案
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header"><h5>目前成員</h5></div>
+            <ul class="list-group list-group-flush">
+                {% for member in members %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ member.user.get_full_name|default:member.user.username }}</strong>
+                        <small class="text-muted ms-2">@{{ member.user.username }}</small>
+                    </div>
+                    <span class="badge bg-{% if member.role == 'admin' %}danger{% elif member.role == 'member' %}primary{% else %}secondary{% endif %}">
+                        {{ member.get_role_display }}
+                    </span>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">尚無成員</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header"><h5>新增成員</h5></div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary w-100">加入</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

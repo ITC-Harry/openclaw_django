@@ -1,0 +1,5 @@
+django>=6.0
+mysqlclient>=2.2
+Pillow>=10.0
+django-crispy-forms>=2.3
+crispy-bootstrap5>=2025.0

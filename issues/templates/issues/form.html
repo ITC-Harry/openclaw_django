@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} - {{ project.key }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header">
+                <h5><i class="bi bi-{% if issue %}pencil{% else %}plus-circle{% endif %}"></i> {{ title }}</h5>
+                <small class="text-muted">{{ project.key }} - {{ project.name }}</small>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% if field.errors %}
+                        <div class="text-danger small">{{ field.errors|join:', ' }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i> 儲存
+                    </button>
+                    <a href="{% url 'projects:detail' project.pk %}" class="btn btn-secondary">取消</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
