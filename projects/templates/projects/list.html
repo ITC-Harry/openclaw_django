@@ -45,15 +45,6 @@
             <span class="filter-badge" id="filterCount">0</span>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <!-- View Toggle -->
-            <div class="view-toggle" onclick="event.stopPropagation()">
-                <button class="view-btn active" id="gridViewBtn" onclick="setView('grid')" title="卡片檢視">
-                    <i class="bi bi-grid-3x3-gap-fill"></i>
-                </button>
-                <button class="view-btn" id="listViewBtn" onclick="setView('list')" title="列表檢視">
-                    <i class="bi bi-list-ul"></i>
-                </button>
-            </div>
             <i class="bi bi-chevron-down text-muted" style="font-size:0.75rem;" id="filterChevron"></i>
         </div>
     </div>
@@ -67,8 +58,8 @@
             <option value="other">其他</option>
         </select>
         <select class="form-select" id="sortFilter" onchange="filterProjects()">
-            <option value="newest">最新</option>
-            <option value="oldest">最舊</option>
+            <option value="newest">最新優先</option>
+            <option value="oldest">最舊優先</option>
             <option value="name">名稱 A-Z</option>
         </select>
     </div>
@@ -76,8 +67,35 @@
 
 {% if projects %}
 
+<!-- View Toggle Bar -->
+<div class="d-flex justify-content-end align-items-center gap-2 mb-3">
+    <div class="view-toggle">
+        <button class="view-btn active" id="gridViewBtn" onclick="setView('grid')" title="卡片檢視">
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+        </button>
+        <button class="view-btn" id="listViewBtn" onclick="setView('list')" title="列表檢視">
+            <i class="bi bi-list-ul"></i>
+        </button>
+    </div>
+    <!-- Column selector (only visible in list mode) -->
+    <div class="dropdown" id="colSelector" style="display:none;">
+        <button class="btn btn-sm btn-outline-secondary rounded-8px px-2" data-bs-toggle="dropdown" style="font-size:0.78rem;">
+            <i class="bi bi-layout-three-columns"></i> 欄位
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end p-2" style="min-width:150px;">
+            <li><label class="dropdown-item px-2 py-1"><input type="checkbox" checked data-col="key"> 代號</label></li>
+            <li><label class="dropdown-item px-2 py-1"><input type="checkbox" checked data-col="name"> 名稱</label></li>
+            <li><label class="dropdown-item px-2 py-1"><input type="checkbox" checked data-col="type"> 類型</label></li>
+            <li><label class="dropdown-item px-2 py-1"><input type="checkbox" checked data-col="lead"> 負責人</label></li>
+            <li><label class="dropdown-item px-2 py-1"><input type="checkbox" checked data-col="count"> 議題數</label></li>
+            <li><label class="dropdown-item px-2 py-1"><input type="checkbox" checked data-col="date"> 建立日期</label></li>
+            <li><label class="dropdown-item px-2 py-1"><input type="checkbox" checked data-col="actions"> 操作</label></li>
+        </ul>
+    </div>
+</div>
+
 <!-- Grid View -->
-<div class="row g-3 show" id="projectGrid">
+<div class="row g-3" id="projectGrid">
     {% for project in projects %}
     <div class="col-xl-4 col-lg-6 project-card"
          data-name="{{ project.name }}"
@@ -91,9 +109,7 @@
                         <span class="badge bg-light text-dark">{{ project.get_project_type_display }}</span>
                     </div>
                     <div class="dropdown" onclick="event.stopPropagation()">
-                        <button class="btn btn-sm btn-light border-0" data-bs-toggle="dropdown">
-                            <i class="bi bi-three-dots-vertical"></i>
-                        </button>
+                        <button class="btn btn-sm btn-light border-0" data-bs-toggle="dropdown"><i class="bi bi-three-dots-vertical"></i></button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{% url 'projects:detail' project.pk %}"><i class="bi bi-eye me-2"></i>檢視</a></li>
                             <li><a class="dropdown-item" href="{% url 'projects:edit' project.pk %}"><i class="bi bi-pencil me-2"></i>編輯</a></li>
@@ -130,28 +146,41 @@
 
 <!-- List View -->
 <div class="project-list" id="projectList">
+    <div class="list-header" id="listHeader">
+        <div class="lh-key" data-col="key" onclick="sortByColumn('key')">代號 <i class="bi bi-arrow-down-up"></i></div>
+        <div class="lh-name" data-col="name" onclick="sortByColumn('name')">名稱 <i class="bi bi-arrow-down-up"></i></div>
+        <div class="lh-type" data-col="type" onclick="sortByColumn('type')">類型 <i class="bi bi-arrow-down-up"></i></div>
+        <div class="lh-lead" data-col="lead" onclick="sortByColumn('lead')">負責人 <i class="bi bi-arrow-down-up"></i></div>
+        <div class="lh-count" data-col="count" onclick="sortByColumn('count')">議題數 <i class="bi bi-arrow-down-up"></i></div>
+        <div class="lh-date" data-col="date" onclick="sortByColumn('date')">建立日期 <i class="bi bi-arrow-down-up"></i></div>
+        <div class="lh-actions" data-col="actions">操作</div>
+    </div>
+    <div id="listBody">
     {% for project in projects %}
     <div class="list-item project-card"
          onclick="location.href='{% url 'projects:detail' project.pk %}'"
          data-name="{{ project.name }}"
          data-type="{{ project.project_type }}"
+         data-lead="{{ project.lead.get_full_name|default:project.lead.username }}"
+         data-count="{{ project.issues.count }}"
          data-created="{{ project.created_at|date:'YmdHis' }}">
-        <div class="li-key">{{ project.key }}</div>
-        <div class="li-name">{{ project.name }}</div>
-        <div class="li-type">{{ project.get_project_type_display }}</div>
-        <div class="li-lead">
+        <div class="li-key" data-col="key"><span class="badge bg-dark">{{ project.key }}</span></div>
+        <div class="li-name" data-col="name">{{ project.name }}</div>
+        <div class="li-type" data-col="type">{{ project.get_project_type_display }}</div>
+        <div class="li-lead" data-col="lead">
             <span class="li-avatar" style="background:#0d6efd;">{{ project.lead.get_full_name|default:project.lead.username|first|upper }}</span>
             {{ project.lead.get_full_name|default:project.lead.username }}
         </div>
-        <div class="li-count">{{ project.issues.count }}</div>
-        <div class="li-date">{{ project.created_at|date:"Y/m/d" }}</div>
-        <div class="li-actions" onclick="event.stopPropagation()">
+        <div class="li-count" data-col="count">{{ project.issues.count }}</div>
+        <div class="li-date" data-col="date">{{ project.created_at|date:"Y/m/d" }}</div>
+        <div class="li-actions" data-col="actions" onclick="event.stopPropagation()">
             <a href="{% url 'projects:detail' project.pk %}" class="btn" title="檢視"><i class="bi bi-eye"></i></a>
             <a href="{% url 'projects:edit' project.pk %}" class="btn" title="編輯"><i class="bi bi-pencil"></i></a>
             <a href="{% url 'projects:delete' project.pk %}" class="btn" title="刪除"><i class="bi bi-trash text-danger"></i></a>
         </div>
     </div>
     {% endfor %}
+    </div>
 </div>
 
 {% else %}
@@ -159,9 +188,7 @@
     <div style="font-size: 3rem; color: #dee2e6;"><i class="bi bi-folder-plus"></i></div>
     <h5 class="mt-2 text-muted">還沒有任何專案</h5>
     <p class="text-muted small">建立你的第一個專案開始管理</p>
-    <a href="{% url 'projects:create' %}" class="btn btn-primary btn-modern mt-1">
-        <i class="bi bi-plus-lg me-1"></i> 建立專案
-    </a>
+    <a href="{% url 'projects:create' %}" class="btn btn-primary btn-modern mt-1"><i class="bi bi-plus-lg me-1"></i> 建立專案</a>
 </div>
 {% endif %}
 
@@ -170,17 +197,20 @@
 function setView(mode) {
     const grid = document.getElementById('projectGrid');
     const list = document.getElementById('projectList');
+    const colSel = document.getElementById('colSelector');
     const gridBtn = document.getElementById('gridViewBtn');
     const listBtn = document.getElementById('listViewBtn');
 
     if (mode === 'grid') {
-        grid.classList.add('show');
-        list.classList.remove('show');
+        grid.style.display = 'flex';
+        list.style.display = 'none';
+        colSel.style.display = 'none';
         gridBtn.classList.add('active');
         listBtn.classList.remove('active');
     } else {
-        grid.classList.remove('show');
-        list.classList.add('show');
+        grid.style.display = 'none';
+        list.style.display = 'block';
+        colSel.style.display = 'inline-block';
         listBtn.classList.add('active');
         gridBtn.classList.remove('active');
     }
@@ -191,7 +221,7 @@ function setView(mode) {
     if (mode === 'list') setView('list');
 })();
 
-// ── Filters ──────────────────────────────────
+// ── Filters Toggle ───────────────────────────
 function toggleFilters() {
     const bar = document.getElementById('filtersBar');
     const chevron = document.getElementById('filterChevron');
@@ -200,11 +230,10 @@ function toggleFilters() {
     chevron.classList.toggle('bi-chevron-up');
 }
 (function() {
-    // Default collapsed
-    const bar = document.getElementById('filtersBar');
-    bar.classList.add('collapsed');
+    document.getElementById('filtersBar').classList.add('collapsed');
 })();
 
+// ── Filter + Sort ────────────────────────────
 function filterProjects() {
     const search = document.getElementById('searchInput').value.toLowerCase();
     const type = document.getElementById('typeFilter').value;
@@ -215,19 +244,16 @@ function filterProjects() {
     if (type) count++;
     document.getElementById('filterCount').textContent = count;
 
-    // Get visible container
-    const grid = document.getElementById('projectGrid');
-    const list = document.getElementById('projectList');
-    const isGridView = grid.classList.contains('show');
-    const container = isGridView ? grid : list;
-    if (!container) return;
+    const isListView = document.getElementById('projectList').style.display !== 'none';
+    const container = isListView
+        ? document.getElementById('listBody')
+        : document.getElementById('projectGrid');
 
     const items = Array.from(container.querySelectorAll('.project-card'));
     items.forEach(c => {
         const name = c.dataset.name.toLowerCase();
         const ptype = c.dataset.type;
-        const match = (!search || name.includes(search)) && (!type || ptype === type);
-        c.style.display = match ? '' : 'none';
+        c.style.display = (!search || name.includes(search)) && (!type || ptype === type) ? '' : 'none';
     });
 
     const visible = items.filter(c => c.style.display !== 'none');
@@ -238,5 +264,36 @@ function filterProjects() {
     });
     visible.forEach(c => container.appendChild(c));
 }
+
+// ── List Column Sort ─────────────────────────
+let sortDir = {};
+function sortByColumn(col) {
+    sortDir[col] = sortDir[col] === 'asc' ? 'desc' : 'asc';
+    const dir = sortDir[col];
+    const body = document.getElementById('listBody');
+    const items = Array.from(body.querySelectorAll('.project-card'));
+    items.sort((a, b) => {
+        const va = a.dataset[col] || '';
+        const vb = b.dataset[col] || '';
+        const cmp = va.localeCompare(vb, undefined, {numeric: true});
+        return dir === 'asc' ? cmp : -cmp;
+    });
+    items.forEach(c => body.appendChild(c));
+    // Update header icons
+    document.querySelectorAll('#listHeader [data-col] i').forEach(i => i.className = 'bi bi-arrow-down-up');
+    const hdr = document.querySelector(`#listHeader [data-col="${col}"] i`);
+    if (hdr) hdr.className = `bi bi-arrow-${dir === 'asc' ? 'up' : 'down'}`;
+}
+
+// ── Column Selector ──────────────────────────
+document.addEventListener('change', function(e) {
+    if (e.target.matches('[data-col] input[type="checkbox"]')) {
+        const col = e.target.dataset.col;
+        const checked = e.target.checked;
+        document.querySelectorAll(`[data-col="${col}"]`).forEach(el => {
+            el.style.display = checked ? '' : 'none';
+        });
+    }
+});
 </script>
 {% endblock %}
