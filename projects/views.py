@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import models
 from .models import Project, ProjectMember
 from .forms import ProjectForm, AddMemberForm
 from issues.models import Issue
@@ -9,7 +10,7 @@ from issues.models import Issue
 @login_required
 def project_list(request):
     projects = Project.objects.filter(
-        members__user=request.user
+        models.Q(members__user=request.user) | models.Q(lead=request.user)
     ).distinct().select_related('lead').prefetch_related('issues')
     total = sum(p.issues.count() for p in projects)
     open_count = sum(p.issues.exclude(status__is_closed=True).count() for p in projects)

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}系統管理 - PM System{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h4><i class="bi bi-shield-fill me-2"></i>系統管理</h4>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value text-primary">{{ total_users }}</div>
+            <div class="stat-label">用戶數</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value text-success">{{ total_projects }}</div>
+            <div class="stat-label">專案數</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value text-warning">{{ total_issue_types }}</div>
+            <div class="stat-label">議題類型</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value text-info">{{ total_statuses }}</div>
+            <div class="stat-label">狀態數</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card-modern h-100">
+            <div class="card-body text-center">
+                <div style="font-size: 2.5rem; color: #0d6efd;"><i class="bi bi-tags-fill"></i></div>
+                <h5 class="mt-2">議題類型</h5>
+                <p class="text-muted small">管理任務、錯誤、功能等類型</p>
+                <a href="{% url 'pm_admin:issue_type_list' %}" class="btn btn-outline-primary btn-modern">管理</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-modern h-100">
+            <div class="card-body text-center">
+                <div style="font-size: 2.5rem; color: #fd7e14;"><i class="bi bi-flag-fill"></i></div>
+                <h5 class="mt-2">優先級</h5>
+                <p class="text-muted small">管理最高/高/中/低/最低級別</p>
+                <a href="{% url 'pm_admin:priority_list' %}" class="btn btn-outline-primary btn-modern">管理</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-modern h-100">
+            <div class="card-body text-center">
+                <div style="font-size: 2.5rem; color: #198754;"><i class="bi bi-diagram-3-fill"></i></div>
+                <h5 class="mt-2">狀態</h5>
+                <p class="text-muted small">管理工作流程狀態</p>
+                <a href="{% url 'pm_admin:status_list' %}" class="btn btn-outline-primary btn-modern">管理</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-modern h-100">
+            <div class="card-body text-center">
+                <div style="font-size: 2.5rem; color: #6f42c1;"><i class="bi bi-people-fill"></i></div>
+                <h5 class="mt-2">用戶管理</h5>
+                <p class="text-muted small">管理用戶權限和狀態</p>
+                <a href="{% url 'pm_admin:user_list' %}" class="btn btn-outline-primary btn-modern">管理</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-modern h-100">
+            <div class="card-body text-center">
+                <div style="font-size: 2.5rem; color: #dc3545;"><i class="bi bi-folder-fill"></i></div>
+                <h5 class="mt-2">全部專案</h5>
+                <p class="text-muted small">檢視系統中所有專案</p>
+                <a href="{% url 'pm_admin:all_projects' %}" class="btn btn-outline-primary btn-modern">檢視</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -10,6 +10,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('projects/', include('projects.urls')),
     path('projects/<int:project_pk>/issues/', include('issues.urls')),
+    path('admin-panel/', include('pm_admin.urls')),
 ]
 
 if settings.DEBUG:

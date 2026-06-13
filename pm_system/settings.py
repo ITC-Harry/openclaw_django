@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'accounts',
     'projects',
     'issues',
+    'pm_admin',
 ]
 
 MIDDLEWARE = [
