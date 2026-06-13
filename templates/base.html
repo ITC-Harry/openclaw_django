@@ -16,87 +16,125 @@
 <body>
 
 {% if user.is_authenticated %}
-    {% with initials=user.get_full_name|default:user.username|first|upper %}
-    <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <i class="bi bi-kanban brand-icon"></i>
-            <span class="brand-text">PM System</span>
-        </div>
-        <div class="sidebar-nav">
-            <div class="nav-section">導覽</div>
-            <a href="{% url 'projects:list' %}" class="nav-item {% if request.resolver_match.url_name == 'list' %}active{% endif %}">
-                <i class="bi bi-grid-1x2-fill"></i>
-                <span class="nav-label">儀表板</span>
-            </a>
-            <a href="{% url 'projects:list' %}" class="nav-item {% if 'projects' in request.path and request.resolver_match.url_name != 'list' %}active{% endif %}">
-                <i class="bi bi-folder-fill"></i>
-                <span class="nav-label">專案管理</span>
-            </a>
-            <a href="{% url 'projects:create' %}" class="nav-item">
-                <i class="bi bi-plus-circle-fill"></i>
-                <span class="nav-label">新建專案</span>
-            </a>
-            <div class="nav-section">工具</div>
-            <a href="{% url 'accounts:profile' %}" class="nav-item">
-                <i class="bi bi-gear-fill"></i>
-                <span class="nav-label">個人設定</span>
-            </a>
-            <a href="{% url 'pm_admin:dashboard' %}" class="nav-item {% if 'admin-panel' in request.path %}active{% endif %}">
-                <i class="bi bi-shield-fill"></i>
-                <span class="nav-label">系統管理</span>
-            </a>
-        </div>
-        <div class="sidebar-footer">
-            <div class="user-avatar"
-                 style="background: {% if user.role == 'admin' %}#dc3545{% elif user.role == 'manager' %}#fd7e14{% else %}#0d6efd{% endif %}">
-                {{ initials }}
-            </div>
-            <div class="user-info">
-                <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
-                <div class="user-role">{{ user.get_role_display }}</div>
-            </div>
-            <a href="{% url 'accounts:logout' %}" class="ms-auto text-decoration-none text-secondary" title="登出">
-                <i class="bi bi-box-arrow-right"></i>
-            </a>
-        </div>
-    </nav>
-
-    <!-- Sidebar Toggle -->
-    <div class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
-        <i class="bi bi-chevron-left"></i>
+{% with initials=user.get_full_name|default:user.username|first|upper %}
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <!-- Header with toggle -->
+    <div class="sidebar-header">
+        <button class="toggle-btn" onclick="toggleSidebar()" title="切換側欄">
+            <i class="bi bi-list"></i>
+        </button>
+        <i class="bi bi-kanban brand-icon"></i>
+        <span class="brand-text">PM System</span>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
-{% endwith %}
+    <div class="sidebar-nav">
+        <div class="nav-section">主要</div>
+        <a href="{% url 'projects:list' %}" class="nav-item {% if request.resolver_match.url_name == 'list' %}active{% endif %}">
+            <i class="bi bi-grid-1x2-fill"></i>
+            <span class="nav-label">儀表板</span>
+        </a>
+
+        <!-- 專案管理 (submenu) -->
+        <div class="nav-item has-sub {% if 'projects' in request.path %}open{% endif %}"
+             onclick="toggleSubmenu(this)">
+            <i class="bi bi-folder-fill"></i>
+            <span class="nav-label">專案管理</span>
+            <i class="bi bi-chevron-right nav-chevron"></i>
+        </div>
+        <div class="submenu {% if 'projects' in request.path %}open{% endif %}">
+            <a href="{% url 'projects:list' %}" class="sub-item {% if request.resolver_match.url_name == 'list' %}active{% endif %}">
+                <i class="bi bi-card-list"></i>
+                <span>我的專案</span>
+            </a>
+            <a href="{% url 'projects:create' %}" class="sub-item {% if request.resolver_match.url_name == 'create' %}active{% endif %}">
+                <i class="bi bi-plus-circle"></i>
+                <span>新建專案</span>
+            </a>
+        </div>
+
+        <div class="nav-section">設定</div>
+
+        <!-- 系統管理 (submenu) -->
+        <div class="nav-item has-sub {% if 'admin-panel' in request.path %}open{% endif %}"
+             onclick="toggleSubmenu(this)">
+            <i class="bi bi-shield-fill"></i>
+            <span class="nav-label">系統管理</span>
+            <i class="bi bi-chevron-right nav-chevron"></i>
+        </div>
+        <div class="submenu {% if 'admin-panel' in request.path %}open{% endif %}">
+            <a href="{% url 'pm_admin:dashboard' %}" class="sub-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i>
+                <span>管理儀表板</span>
+            </a>
+            <a href="{% url 'pm_admin:issue_type_list' %}" class="sub-item">
+                <i class="bi bi-tags"></i>
+                <span>議題類型</span>
+            </a>
+            <a href="{% url 'pm_admin:priority_list' %}" class="sub-item">
+                <i class="bi bi-flag"></i>
+                <span>優先級</span>
+            </a>
+            <a href="{% url 'pm_admin:status_list' %}" class="sub-item">
+                <i class="bi bi-diagram-3"></i>
+                <span>狀態</span>
+            </a>
+            <a href="{% url 'pm_admin:user_list' %}" class="sub-item">
+                <i class="bi bi-people"></i>
+                <span>用戶管理</span>
+            </a>
+            <a href="{% url 'pm_admin:all_projects' %}" class="sub-item">
+                <i class="bi bi-folder"></i>
+                <span>全部專案</span>
+            </a>
+        </div>
+
+        <a href="{% url 'accounts:profile' %}" class="nav-item">
+            <i class="bi bi-gear-fill"></i>
+            <span class="nav-label">個人設定</span>
+        </a>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="user-avatar"
+             style="background: {% if user.role == 'admin' %}#dc3545{% elif user.role == 'manager' %}#fd7e14{% else %}#0d6efd{% endif %}">
+            {{ initials }}
+        </div>
+        <div class="user-info">
+            <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+            <div class="user-role">{{ user.get_role_display }}</div>
+        </div>
+        <a href="{% url 'accounts:logout' %}" class="logout-btn" title="登出">
+            <i class="bi bi-box-arrow-right"></i>
+        </a>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
 {% endif %}
 
-        {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-        {% endif %}
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
 
-        {% block content %}{% endblock %}
+    {% block content %}{% endblock %}
 
 {% if user.is_authenticated %}
-    </div>
+</div>
 {% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
-    const toggle = document.getElementById('sidebarToggle');
-    const icon = toggle.querySelector('i');
     sidebar.classList.toggle('collapsed');
-    icon.classList.toggle('bi-chevron-left');
-    icon.classList.toggle('bi-chevron-right');
     localStorage.setItem('sidebar_collapsed', sidebar.classList.contains('collapsed'));
 }
 // Restore sidebar state
@@ -104,11 +142,16 @@ function toggleSidebar() {
     const collapsed = localStorage.getItem('sidebar_collapsed') === 'true';
     if (collapsed) {
         document.getElementById('sidebar').classList.add('collapsed');
-        const toggle = document.getElementById('sidebarToggle');
-        const icon = toggle.querySelector('i');
-        icon.classList.replace('bi-chevron-left', 'bi-chevron-right');
     }
 })();
+
+function toggleSubmenu(el) {
+    el.classList.toggle('open');
+    const sub = el.nextElementSibling;
+    if (sub && sub.classList.contains('submenu')) {
+        sub.classList.toggle('open');
+    }
+}
 </script>
 {% block extra_js %}{% endblock %}
 </body>
