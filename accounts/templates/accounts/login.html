@@ -1,28 +1,34 @@
 {% extends 'base.html' %}
 {% block title %}登入 - PM System{% endblock %}
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-4">
-        <div class="card shadow">
-            <div class="card-body p-4">
-                <h3 class="text-center mb-4"><i class="bi bi-kanban"></i> PM System</h3>
-                <form method="post">
-                    {% csrf_token %}
-                    {% for field in form %}
-                    <div class="mb-3">
-                        <label class="form-label">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.errors %}
-                        <div class="text-danger small">{{ field.errors|join:', ' }}</div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                    <button type="submit" class="btn btn-primary w-100">登入</button>
-                </form>
-                <p class="text-center mt-3">
-                    還沒有帳號？<a href="{% url 'accounts:register' %}">註冊</a>
-                </p>
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <i class="bi bi-kanban"></i>
+            <h3>PM System</h3>
+            <p class="text-muted">專案管理系統</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold small">{{ field.label }}</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light">
+                        <i class="bi bi-{% if 'username' in field.name %}person{% else %}lock{% endif %}"></i>
+                    </span>
+                    {{ field }}
+                </div>
+                {% if field.errors %}
+                <div class="text-danger small mt-1">{{ field.errors|join:', ' }}</div>
+                {% endif %}
             </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary w-100 btn-modern py-2">登入</button>
+        </form>
+        <div class="text-center mt-4">
+            <small class="text-muted">還沒有帳號？</small>
+            <a href="{% url 'accounts:register' %}" class="fw-semibold">註冊</a>
         </div>
     </div>
 </div>

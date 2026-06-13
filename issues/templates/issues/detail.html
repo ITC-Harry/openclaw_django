@@ -1,103 +1,167 @@
 {% extends 'base.html' %}
-{% load issue_extras %}
-{% block title %}#{{ issue.id }} {{ issue.summary }} - {{ project.key }}{% endblock %}
+{% block title %}#{{ project.key }}-{{ issue.id }} {{ issue.summary }}{% endblock %}
 {% block content %}
 
-<div class="mb-3">
-    <a href="{% url 'projects:detail' project.pk %}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left"></i> 返回看板
-    </a>
+<div class="page-header">
+    <div>
+        <span class="text-muted small">
+            <a href="{% url 'projects:detail' project.pk %}" class="text-decoration-none">{{ project.key }}</a>
+            <i class="bi bi-chevron-right mx-1"></i>
+            <span class="fw-semibold">{{ project.key }}-{{ issue.id }}</span>
+        </span>
+        <h4 class="mt-1">{{ issue.summary }}</h4>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'issues:edit' project.pk issue.pk %}" class="btn btn-outline-primary btn-modern">
+            <i class="bi bi-pencil me-1"></i> 編輯
+        </a>
+        <a href="{% url 'issues:delete' project.pk issue.pk %}" class="btn btn-outline-danger btn-modern">
+            <i class="bi bi-trash me-1"></i>
+        </a>
+    </div>
 </div>
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="card shadow mb-3">
+<div class="row g-4">
+    <div class="col-lg-8">
+        <!-- Main Info -->
+        <div class="card-modern mb-4">
             <div class="card-body">
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">{{ project.key }}-{{ issue.id }}</span>
+                <div class="d-flex flex-wrap gap-3 mb-4">
                     <div>
-                        <a href="{% url 'issues:edit' project.pk issue.pk %}" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-pencil"></i> 編輯
-                        </a>
-                        <a href="{% url 'issues:delete' project.pk issue.pk %}" class="btn btn-sm btn-outline-danger">
-                            <i class="bi bi-trash"></i>
-                        </a>
+                        <small class="text-muted d-block fw-semibold mb-1">類型</small>
+                        <span class="badge rounded-pill" style="background:{{ issue.issue_type.color }}">
+                            {{ issue.issue_type.name }}
+                        </span>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block fw-semibold mb-1">優先級</small>
+                        <span class="badge rounded-pill" style="background:{{ issue.priority.color }}">
+                            {{ issue.priority.name }}
+                        </span>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block fw-semibold mb-1">狀態</small>
+                        <span class="badge rounded-pill" style="background:{{ issue.status.color }}">
+                            {{ issue.status.name }}
+                        </span>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block fw-semibold mb-1">負責人</small>
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="bi bi-person-circle"></i>
+                            {{ issue.assignee.get_full_name|default:issue.assignee.username|default:'未指派' }}
+                        </div>
                     </div>
                 </div>
-                <h4>{{ issue.summary }}</h4>
-                <hr>
-                <div class="row mb-3">
-                    <div class="col-md-3"><strong>類型</strong><br><span class="badge" style="background:{{ issue.issue_type.color }}">{{ issue.issue_type.name }}</span></div>
-                    <div class="col-md-3"><strong>優先級</strong><br><span class="badge" style="background:{{ issue.priority.color }}">{{ issue.priority.name }}</span></div>
-                    <div class="col-md-3"><strong>狀態</strong><br><span class="badge" style="background:{{ issue.status.color }}">{{ issue.status.name }}</span></div>
-                    <div class="col-md-3"><strong>負責人</strong><br>{{ issue.assignee.get_full_name|default:issue.assignee.username|default:'未指派' }}</div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-6"><strong>報告人</strong><br>{{ issue.reporter.get_full_name|default:issue.reporter.username }}</div>
-                    <div class="col-md-6"><strong>標籤</strong><br>
-                        {% for label in issue.labels|split %}
-                        <span class="badge bg-info">{{ label.strip }}</span>
-                        {% empty %}
-                        <span class="text-muted">無</span>
-                        {% endfor %}
+
+                <div class="d-flex flex-wrap gap-3 mb-3">
+                    <div>
+                        <small class="text-muted d-block fw-semibold mb-1">報告人</small>
+                        <span>{{ issue.reporter.get_full_name|default:issue.reporter.username }}</span>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block fw-semibold mb-1">建立於</small>
+                        <span>{{ issue.created_at|date:"Y/m/d H:i" }}</span>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block fw-semibold mb-1">更新於</small>
+                        <span>{{ issue.updated_at|date:"Y/m/d H:i" }}</span>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block fw-semibold mb-1">標籤</small>
+                        <div>
+                            {% for label in issue.labels|split %}
+                            <span class="badge bg-info bg-opacity-10 text-info me-1">{{ label }}</span>
+                            {% empty %}
+                            <span class="text-muted">-</span>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
-                <div class="row mb-3">
-                    <div class="col-md-6"><small class="text-muted">建立於 {{ issue.created_at|date:"Y/m/d H:i" }}</small></div>
-                    <div class="col-md-6"><small class="text-muted">更新於 {{ issue.updated_at|date:"Y/m/d H:i" }}</small></div>
-                </div>
+
                 {% if issue.description %}
-                <hr>
-                <h6>描述</h6>
-                <div class="p-3 bg-light rounded">{{ issue.description|linebreaks }}</div>
+                <hr class="my-3">
+                <h6 class="fw-bold mb-3"><i class="bi bi-text-paragraph me-2"></i>描述</h6>
+                <div class="bg-light p-4 rounded-3">{{ issue.description|linebreaks }}</div>
                 {% endif %}
             </div>
         </div>
 
         <!-- Comments -->
-        <div class="card shadow">
-            <div class="card-header"><h5><i class="bi bi-chat-dots"></i> 評論 ({{ issue.comments.count }})</h5></div>
+        <div class="card-modern">
+            <div class="card-header">
+                <i class="bi bi-chat-dots me-2"></i>評論 ({{ issue.comments.count }})
+            </div>
             <div class="card-body">
                 {% for comment in issue.comments.all %}
-                <div class="d-flex mb-3">
+                <div class="d-flex gap-3 mb-4">
+                    <div class="user-avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
+                         style="width:36px;height:36px;font-size:0.8rem;background:#0d6efd;">
+                        {{ comment.author.get_full_name|default:comment.author.username|first|upper }}
+                    </div>
                     <div class="flex-grow-1">
-                        <strong>{{ comment.author.get_full_name|default:comment.author.username }}</strong>
-                        <small class="text-muted ms-2">{{ comment.created_at|date:"Y/m/d H:i" }}</small>
-                        <p class="mb-0 mt-1">{{ comment.text|linebreaks }}</p>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <strong style="font-size:0.9rem;">{{ comment.author.get_full_name|default:comment.author.username }}</strong>
+                            <small class="text-muted">{{ comment.created_at|date:"Y/m/d H:i" }}</small>
+                        </div>
+                        <div class="bg-light p-3 rounded-3">{{ comment.text|linebreaks }}</div>
                     </div>
                 </div>
-                {% if not forloop.last %}<hr>{% endif %}
+                {% if not forloop.last %}<hr class="my-3">{% endif %}
                 {% empty %}
-                <p class="text-muted">尚無評論</p>
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-chat" style="font-size:2rem;"></i>
+                    <p class="mt-2">尚無評論，來說點什麼吧</p>
+                </div>
                 {% endfor %}
-                <hr>
+
+                <hr class="my-4">
+                <h6 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2"></i>新增評論</h6>
                 <form method="post">
                     {% csrf_token %}
-                    {% for field in form %}
-                    <div class="mb-2">{{ field }}</div>
-                    {% endfor %}
-                    <button type="submit" class="btn btn-primary btn-sm">新增評論</button>
+                    <div class="mb-3">{{ form.text }}</div>
+                    <button type="submit" class="btn btn-primary btn-modern">
+                        <i class="bi bi-send me-1"></i> 發表評論
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 
     <!-- Sidebar -->
-    <div class="col-md-4">
-        <div class="card shadow mb-3">
-            <div class="card-header"><h6><i class="bi bi-arrow-left-right"></i> 變更狀態</h6></div>
+    <div class="col-lg-4">
+        <!-- Status Update -->
+        <div class="card-modern mb-4">
+            <div class="card-header"><i class="bi bi-arrow-left-right me-2"></i>變更狀態</div>
             <div class="card-body">
                 <form method="post" action="{% url 'issues:update_status' project.pk issue.pk %}">
                     {% csrf_token %}
-                    <select name="status_id" class="form-select mb-2"
-                            onchange="this.form.submit()">
-                        {% for s in issue.status.__class__.objects.all %}
+                    <select name="status_id" class="form-select mb-3" onchange="this.form.submit()">
+                        {% for s in all_statuses %}
                         <option value="{{ s.pk }}" {% if s == issue.status %}selected{% endif %}>
                             {{ s.name }}
                         </option>
                         {% endfor %}
                     </select>
+                    <small class="text-muted">選擇新狀態後會自動儲存</small>
                 </form>
+            </div>
+        </div>
+
+        <!-- Quick Info -->
+        <div class="card-modern">
+            <div class="card-header"><i class="bi bi-info-circle me-2"></i>摘要</div>
+            <div class="card-body">
+                <div class="issue-meta">
+                    <dl>
+                        <dt>建立者</dt>
+                        <dd>{{ issue.reporter.get_full_name|default:issue.reporter.username }}</dd>
+                        <dt>建立時間</dt>
+                        <dd>{{ issue.created_at|date:"Y/m/d H:i" }}</dd>
+                        <dt>最後更新</dt>
+                        <dd>{{ issue.updated_at|date:"Y/m/d H:i" }}</dd>
+                    </dl>
+                </div>
             </div>
         </div>
     </div>

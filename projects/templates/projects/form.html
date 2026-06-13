@@ -1,31 +1,39 @@
 {% extends 'base.html' %}
 {% block title %}{{ title }} - PM System{% endblock %}
 {% block content %}
+<div class="page-header">
+    <h4><i class="bi bi-{% if project %}pencil-square{% else %}plus-square{% endif %} me-2"></i>{{ title }}</h4>
+    <a href="{% url 'projects:list' %}" class="btn btn-outline-secondary btn-modern">
+        <i class="bi bi-arrow-left me-1"></i> 返回
+    </a>
+</div>
+
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow">
-            <div class="card-header">
-                <h5><i class="bi bi-{% if project %}pencil{% else %}plus-circle{% endif %}"></i> {{ title }}</h5>
-            </div>
+    <div class="col-lg-8">
+        <div class="card-modern">
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    {% for field in form %}
-                    <div class="mb-3">
-                        <label class="form-label">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.help_text %}
-                        <div class="form-text">{{ field.help_text }}</div>
-                        {% endif %}
-                        {% if field.errors %}
-                        <div class="text-danger small">{{ field.errors|join:', ' }}</div>
-                        {% endif %}
+                    <div class="row g-3">
+                        {% for field in form %}
+                        <div class="{% if field.name in 'name,key' %}col-md-6{% else %}col-12{% endif %} mb-2">
+                            <label class="form-label fw-semibold small">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                            <div class="form-text small">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% if field.errors %}
+                            <div class="text-danger small mt-1">{{ field.errors|join:', ' }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-lg"></i> 儲存
-                    </button>
-                    <a href="{% url 'projects:list' %}" class="btn btn-secondary">取消</a>
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-modern">
+                            <i class="bi bi-check-lg me-1"></i> 儲存
+                        </button>
+                        <a href="{% url 'projects:list' %}" class="btn btn-light btn-modern">取消</a>
+                    </div>
                 </form>
             </div>
         </div>

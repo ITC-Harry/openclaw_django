@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Issue, Comment, IssueStatus
+from .models import Issue, Comment, IssueStatus as IssueStatusModel
 from .forms import IssueForm, CommentForm
 from projects.models import Project
 
@@ -9,7 +9,7 @@ from projects.models import Project
 @login_required
 def issue_create(request, project_pk):
     project = get_object_or_404(Project, pk=project_pk)
-    default_status = IssueStatus.objects.filter(is_default=True).first()
+    default_status = IssueStatusModel.objects.filter(is_default=True).first()
 
     if request.method == 'POST':
         form = IssueForm(request.POST)
@@ -53,6 +53,7 @@ def issue_detail(request, project_pk, pk):
 
     return render(request, 'issues/detail.html', {
         'issue': issue, 'project': project, 'form': form,
+        'all_statuses': IssueStatusModel.objects.all(),
     })
 
 
@@ -95,7 +96,7 @@ def issue_update_status(request, project_pk, pk):
         issue = get_object_or_404(Issue, pk=pk, project=project)
         status_id = request.POST.get('status_id')
         if status_id:
-            new_status = get_object_or_404(IssueStatus, pk=status_id)
+            new_status = get_object_or_404(IssueStatusModel, pk=status_id)
             issue.status = new_status
             issue.save()
             messages.success(request, f'狀態已變更為 {new_status.name}')

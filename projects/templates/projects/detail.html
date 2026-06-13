@@ -2,62 +2,134 @@
 {% block title %}{{ project.key }} - {{ project.name }}{% endblock %}
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="page-header">
     <div>
-        <h3>
-            <span class="badge bg-secondary">{{ project.key }}</span>
+        <h4>
+            <span class="badge bg-dark me-2">{{ project.key }}</span>
             {{ project.name }}
-        </h3>
-        <p class="text-muted mb-0">{{ project.description|truncatechars:200 }}</p>
+        </h4>
+        <p class="text-muted small mb-0">{{ project.description|truncatechars:200 }}</p>
     </div>
-    <div>
-        <a href="{% url 'issues:create' project.pk %}" class="btn btn-success">
-            <i class="bi bi-plus-lg"></i> 新建議題
+    <div class="d-flex gap-2">
+        <a href="{% url 'issues:create' project.pk %}" class="btn btn-success btn-modern">
+            <i class="bi bi-plus-lg me-1"></i> 新建議題
         </a>
-        <a href="{% url 'projects:members' project.pk %}" class="btn btn-outline-primary">
-            <i class="bi bi-people"></i> 成員
-        </a>
-        <a href="{% url 'projects:edit' project.pk %}" class="btn btn-outline-secondary">
-            <i class="bi bi-pencil"></i> 編輯
-        </a>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-modern" data-bs-toggle="dropdown">
+                <i class="bi bi-gear me-1"></i> 更多
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{% url 'projects:members' project.pk %}">
+                    <i class="bi bi-people me-2"></i>成員管理
+                </a></li>
+                <li><a class="dropdown-item" href="{% url 'projects:edit' project.pk %}">
+                    <i class="bi bi-pencil me-2"></i>編輯專案
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="{% url 'projects:delete' project.pk %}">
+                    <i class="bi bi-trash me-2"></i>刪除專案
+                </a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Project Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value text-primary">{{ issues.count }}</div>
+            <div class="stat-label">全部議題</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value" style="color:#0d6efd">{{ in_progress_count|default:"0" }}</div>
+            <div class="stat-label">進行中</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value" style="color:#198754">{{ done_count|default:"0" }}</div>
+            <div class="stat-label">已完成</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value text-muted">{{ project.members.count }}</div>
+            <div class="stat-label">成員數</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="filters-bar">
+    <i class="bi bi-funnel text-muted me-1"></i>
+    <span class="fw-semibold small me-2">篩選</span>
+    <div class="filter-group">
+        <select class="form-select" id="typeFilter" onchange="filterKanban()">
+            <option value="">全部類型</option>
+            {% for t in issue_types %}
+            <option value="{{ t.id }}">{{ t.name }}</option>
+            {% endfor %}
+        </select>
+        <select class="form-select" id="priorityFilter" onchange="filterKanban()">
+            <option value="">全部優先級</option>
+            {% for p in priorities %}
+            <option value="{{ p.id }}">{{ p.name }}</option>
+            {% endfor %}
+        </select>
+        <select class="form-select" id="assigneeFilter" onchange="filterKanban()">
+            <option value="">全部負責人</option>
+            {% for m in project.members.all %}
+            <option value="{{ m.user.id }}">{{ m.user.get_full_name|default:m.user.username }}</option>
+            {% endfor %}
+        </select>
     </div>
 </div>
 
 <!-- Kanban Board -->
-<div class="row">
+<div class="row g-3" id="kanbanBoard">
     {% for status, issue_list in kanban.items %}
-    <div class="col-md-3 mb-3">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center"
-                 style="border-left: 4px solid {{ status.color }}">
-                <strong>{{ status.name }}</strong>
+    <div class="col-md-3">
+        <div class="kanban-column">
+            <div class="column-header">
+                <span>
+                    <span class="d-inline-block rounded-circle me-2"
+                          style="width:10px;height:10px;background:{{ status.color }}"></span>
+                    {{ status.name }}
+                </span>
                 <span class="badge bg-secondary">{{ issue_list|length }}</span>
             </div>
-            <div class="card-body p-2" style="min-height: 200px;">
+            <div class="kanban-cards" data-status="{{ status.id }}">
                 {% for issue in issue_list %}
-                <div class="card mb-2 border-start border-4"
-                     style="border-left-color: {{ issue.priority.color }} !important; cursor: pointer;"
+                <div class="kanban-card"
+                     style="border-left-color: {{ issue.priority.color }}"
+                     data-type="{{ issue.issue_type.id }}"
+                     data-priority="{{ issue.priority.id }}"
+                     data-assignee="{{ issue.assignee.id|default:'' }}"
                      onclick="location.href='{% url 'issues:detail' project.pk issue.pk %}'">
-                    <div class="card-body p-2">
-                        <div class="d-flex justify-content-between">
-                            <small class="text-muted">{{ project.key }}-{{ issue.id }}</small>
-                            <span class="badge" style="background: {{ issue.issue_type.color }}">{{ issue.issue_type.name }}</span>
-                        </div>
-                        <p class="mb-1 small fw-bold">{{ issue.summary|truncatechars:40 }}</p>
-                        <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted fw-semibold">#{{ project.key }}-{{ issue.id }}</small>
+                        <span class="badge rounded-pill" style="background:{{ issue.issue_type.color }};font-size:0.65rem;">
+                            {{ issue.issue_type.name }}
+                        </span>
+                    </div>
+                    <p class="fw-semibold mb-2" style="font-size:0.9rem;">{{ issue.summary|truncatechars:50 }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="bi bi-person text-muted" style="font-size:0.75rem;"></i>
                             <small class="text-muted">
-                                <i class="bi bi-person"></i>
-                                {{ issue.assignee.get_full_name|default:issue.assignee.username|default:'未指派' }}
-                            </small>
-                            <small class="text-muted">
-                                <i class="bi bi-flag"></i> {{ issue.priority.name }}
+                                {{ issue.assignee.get_full_name|default:issue.assignee.username|default:'未指派'|truncatechars:8 }}
                             </small>
                         </div>
+                        <small class="text-muted"><i class="bi bi-flag"></i> {{ issue.priority.name }}</small>
                     </div>
                 </div>
                 {% empty %}
-                <div class="text-center text-muted py-3">
-                    <small>尚無議題</small>
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-inbox" style="font-size:1.5rem;"></i>
+                    <div class="small mt-1">尚無議題</div>
                 </div>
                 {% endfor %}
             </div>
@@ -65,4 +137,25 @@
     </div>
     {% endfor %}
 </div>
+
+<script>
+function filterKanban() {
+    const typeFilter = document.getElementById('typeFilter').value;
+    const priorityFilter = document.getElementById('priorityFilter').value;
+    const assigneeFilter = document.getElementById('assigneeFilter').value;
+
+    document.querySelectorAll('.kanban-card').forEach(card => {
+        const matchType = !typeFilter || card.dataset.type === typeFilter;
+        const matchPriority = !priorityFilter || card.dataset.priority === priorityFilter;
+        const matchAssignee = !assigneeFilter || card.dataset.assignee === assigneeFilter;
+        card.style.display = (matchType && matchPriority && matchAssignee) ? '' : 'none';
+    });
+
+    // Update counts
+    document.querySelectorAll('.kanban-column').forEach(col => {
+        const visible = col.querySelectorAll('.kanban-card:not([style*=\"display: none\"])').length;
+        col.querySelector('.badge.bg-secondary').textContent = visible;
+    });
+}
+</script>
 {% endblock %}

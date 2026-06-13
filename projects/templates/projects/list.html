@@ -1,45 +1,122 @@
 {% extends 'base.html' %}
-{% block title %}我的專案 - PM System{% endblock %}
+{% block title %}儀表板 - PM System{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h3><i class="bi bi-folder"></i> 我的專案</h3>
-    <a href="{% url 'projects:create' %}" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> 新建專案
+<div class="page-header">
+    <h4><i class="bi bi-grid-1x2-fill me-2"></i>儀表板</h4>
+    <a href="{% url 'projects:create' %}" class="btn btn-primary btn-modern">
+        <i class="bi bi-plus-lg me-1"></i> 新建專案
     </a>
 </div>
 
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value text-primary">{{ projects.count }}</div>
+            <div class="stat-label">全部專案</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value text-success">{{ total_issues|default:"0" }}</div>
+            <div class="stat-label">全部議題</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value text-warning">{{ open_issues|default:"0" }}</div>
+            <div class="stat-label">進行中</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-value" style="color: #198754;">{{ done_issues|default:"0" }}</div>
+            <div class="stat-label">已完成</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="filters-bar">
+    <i class="bi bi-funnel text-muted me-1"></i>
+    <span class="fw-semibold small me-2">篩選</span>
+    <div class="filter-group">
+        <input type="text" class="form-control" placeholder="搜尋專案..." id="searchInput" oninput="filterProjects()">
+        <select class="form-select" id="typeFilter" onchange="filterProjects()">
+            <option value="">全部類型</option>
+            <option value="software">軟體開發</option>
+            <option value="business">商業專案</option>
+            <option value="personal">個人專案</option>
+        </select>
+        <select class="form-select" id="sortFilter" onchange="filterProjects()">
+            <option value="newest">最新優先</option>
+            <option value="oldest">最舊優先</option>
+            <option value="name">名稱排序</option>
+        </select>
+    </div>
+</div>
+
+<!-- Project Grid -->
 {% if projects %}
-<div class="row">
+<div class="row g-3" id="projectGrid">
     {% for project in projects %}
-    <div class="col-md-4 mb-3">
-        <div class="card shadow-sm h-100">
+    <div class="col-xl-4 col-lg-6 project-card"
+         data-name="{{ project.name }}"
+         data-type="{{ project.project_type }}"
+         data-created="{{ project.created_at|date:'YmdHis' }}">
+        <div class="card-modern h-100">
             <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <h5 class="card-title">
-                        <span class="badge bg-secondary">{{ project.key }}</span>
-                        {{ project.name }}
-                    </h5>
-                    <span class="badge bg-info">{{ project.get_project_type_display }}</span>
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <span class="badge bg-dark me-2">{{ project.key }}</span>
+                        <span class="badge bg-light text-dark">{{ project.get_project_type_display }}</span>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light border-0" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'projects:detail' project.pk %}">
+                                <i class="bi bi-eye me-2"></i>檢視
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'projects:edit' project.pk %}">
+                                <i class="bi bi-pencil me-2"></i>編輯
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'projects:members' project.pk %}">
+                                <i class="bi bi-people me-2"></i>成員
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'projects:delete' project.pk %}">
+                                <i class="bi bi-trash me-2"></i>刪除
+                            </a></li>
+                        </ul>
+                    </div>
                 </div>
-                <p class="card-text text-muted small">
-                    {{ project.description|truncatechars:120 }}
-                </p>
+                <h5 class="fw-bold mb-1">
+                    <a href="{% url 'projects:detail' project.pk %}" class="text-decoration-none text-dark">
+                        {{ project.name }}
+                    </a>
+                </h5>
+                <p class="text-muted small mb-3">{{ project.description|truncatechars:100 }}</p>
                 <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="user-avatar rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                             style="width:28px;height:28px;font-size:0.7rem;font-weight:600;">
+                            {{ project.lead.get_full_name|default:project.lead.username|first|upper }}
+                        </div>
+                        <small class="text-muted">{{ project.lead.get_full_name|default:project.lead.username }}</small>
+                    </div>
                     <small class="text-muted">
-                        <i class="bi bi-person"></i> {{ project.lead.get_full_name|default:project.lead.username }}
-                    </small>
-                    <small class="text-muted">
-                        <i class="bi bi-clock"></i> {{ project.created_at|date:"Y/m/d" }}
+                        <i class="bi bi-clock me-1"></i>{{ project.created_at|date:"Y/m/d" }}
                     </small>
                 </div>
             </div>
-            <div class="card-footer bg-transparent">
-                <a href="{% url 'projects:detail' project.pk %}" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-eye"></i> 檢視
-                </a>
-                <span class="badge bg-secondary float-end">
-                    <i class="bi bi-card-list"></i> {{ project.issues.count }}
-                </span>
+            <div class="card-footer bg-transparent border-top-0 px-3 pb-3 pt-0">
+                <div class="d-flex gap-2">
+                    <span class="badge bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-card-list me-1"></i>{{ project.issues.count }}
+                    </span>
+                </div>
             </div>
         </div>
     </div>
@@ -47,9 +124,41 @@
 </div>
 {% else %}
 <div class="text-center py-5">
-    <i class="bi bi-folder-plus" style="font-size: 4rem; color: #ccc;"></i>
-    <h4 class="mt-3 text-muted">還沒有任何專案</h4>
-    <a href="{% url 'projects:create' %}" class="btn btn-primary mt-2">建立第一個專案</a>
+    <div style="font-size: 4rem; color: #dee2e6;">
+        <i class="bi bi-folder-plus"></i>
+    </div>
+    <h5 class="mt-3 text-muted">還沒有任何專案</h5>
+    <p class="text-muted small">建立你的第一個專案開始管理</p>
+    <a href="{% url 'projects:create' %}" class="btn btn-primary btn-modern mt-2">
+        <i class="bi bi-plus-lg me-1"></i> 建立專案
+    </a>
 </div>
 {% endif %}
+
+<script>
+function filterProjects() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const type = document.getElementById('typeFilter').value;
+    const sort = document.getElementById('sortFilter').value;
+    const grid = document.getElementById('projectGrid');
+    if (!grid) return;
+    const cards = Array.from(grid.querySelectorAll('.project-card'));
+
+    cards.forEach(c => {
+        const name = c.dataset.name.toLowerCase();
+        const ptype = c.dataset.type;
+        const match = (!search || name.includes(search)) && (!type || ptype === type);
+        c.style.display = match ? '' : 'none';
+    });
+
+    // Sort
+    const visible = cards.filter(c => c.style.display !== 'none');
+    visible.sort((a, b) => {
+        if (sort === 'name') return a.dataset.name.localeCompare(b.dataset.name);
+        if (sort === 'oldest') return a.dataset.created.localeCompare(b.dataset.created);
+        return b.dataset.created.localeCompare(a.dataset.created);
+    });
+    visible.forEach(c => grid.appendChild(c));
+}
+</script>
 {% endblock %}

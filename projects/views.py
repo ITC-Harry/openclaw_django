@@ -10,8 +10,16 @@ from issues.models import Issue
 def project_list(request):
     projects = Project.objects.filter(
         members__user=request.user
-    ).distinct().select_related('lead')
-    return render(request, 'projects/list.html', {'projects': projects})
+    ).distinct().select_related('lead').prefetch_related('issues')
+    total = sum(p.issues.count() for p in projects)
+    open_count = sum(p.issues.exclude(status__is_closed=True).count() for p in projects)
+    done_count = sum(p.issues.filter(status__is_closed=True).count() for p in projects)
+    return render(request, 'projects/list.html', {
+        'projects': projects,
+        'total_issues': total,
+        'open_issues': open_count,
+        'done_issues': done_count,
+    })
 
 
 @login_required
@@ -52,16 +60,23 @@ def project_detail(request, pk):
                 project.issues.values('status__id', 'status__name').distinct()}
 
     # Kanban data
-    from issues.models import IssueStatus
+    from issues.models import IssueStatus, IssueType, IssuePriority
     kanban_statuses = IssueStatus.objects.all()
     kanban = {}
     for s in kanban_statuses:
         kanban[s] = issues.filter(status=s)
+    
+    in_progress_count = issues.exclude(status__is_closed=True).count()
+    done_count = issues.filter(status__is_closed=True).count()
 
     return render(request, 'projects/detail.html', {
         'project': project,
         'issues': issues,
         'kanban': kanban,
+        'issue_types': IssueType.objects.all(),
+        'priorities': IssuePriority.objects.all(),
+        'in_progress_count': in_progress_count,
+        'done_count': done_count,
     })
 
 
